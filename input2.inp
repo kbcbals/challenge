@@ -1,8 +1,5 @@
 # input file for the robot navigation system
-HELLO
-SET 1,2,NORTH
-PLACE 0,0,NORTH
+PLACE 3,2,NORTH
 MOVE
 MOVE
 REPORT
-
