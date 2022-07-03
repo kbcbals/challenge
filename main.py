@@ -14,11 +14,13 @@ import array as arr  # x,y,direction variables
 #############################################################################################
 #                                   declarations
 #############################################################################################
-ans = True
 record = arr.array('i', [0, 0, 0])  # x,y,f
-record_x = 0
-record_y = 0
-record_f = 0
+total_jobs: int = 0
+avg_time: float = 0
+max_time: float = 0
+max_time_name = ""
+min_time: float = 0
+min_time_name = ""
 
 # get the date and time
 now = datetime.now()  # current date and time
@@ -53,25 +55,24 @@ def check_start_command(line):
         v3 = str(data[2])
         v3 = v3.replace('\n', '', 1)
 
-        record_x = 0
-        record_y = 0
-        record_f = 0
+        record_x: int = 0
+        record_y: int = 0
+        record_f: int = 0
 
         # get 'x'
-        if 0 <= v1 <= 5:
+        if 0 <= v1:
+            if v1 > 5:
+                # print(f" oops  out of range x:{v1}, limit to 5 (max)")
+                v1 = 5
             record_x = v1
-            # print(f" true -1 rec:{record_X}{v1}- {record}")
-        else:
-            # print(f" false : ignore :  -1 rec:{record_X} {v1}- {record}")
-            return False
+            # print(f" true -1 rec:{record_x}{v1}- {record}")
 
-        # get 'y'
-        if 0 <= v2 <= 5:
+        if 0 <= v2:
+            if v2 > 5:
+                # print(f" oops  out of range y:{v2}, limit to 5 (max)")
+                v2 = 5
             record_y = v2
-            # print(f" true -2 rec:{record_Y}{v2}- {record}")
-        else:
-            # print(f" ignore : false -2 rec:{record_Y} {v2}- {record}")
-            return False
+            # print(f" true -1 rec:{record_y}{v2}- {record}")
 
         # get 'f'
         if v3 == 'NORTH':
@@ -84,13 +85,14 @@ def check_start_command(line):
             record_f = 4
         else:
             # print(f" ignore :  false -3 {v3}- {record}")
+            # print(f" invalid direction f:{v3} ")
             return False
 
+        # update the record , only if x,y,f are valid
         record[0] = record_x
         record[1] = record_y
         record[2] = record_f
 
-        # print(f" success :  True -3 {v3}- {record}")
         return True
     else:
         return False
@@ -100,11 +102,23 @@ def check_start_command(line):
 #                                   validate_start_command
 #
 
-def validate_start_command(line):
+def validate_start_command(dline):
     # print(f"validate_start_command called :: {line} ")
     index = 0
-    data = line.split(' ')
+
+    if len(dline.strip()) <= 0:  # check for NULL
+        return False
+    line = dline  # assign and process
+
+    data = line.split(' ')  # parse the header line
     # print(len(data))
+
+    # check for the 'PLACE' command
+    if len(data) > 0:
+        if not data[0] == "PLACE":
+            return False
+        # else:
+        # print(f" data[0] = {data[0]}")
 
     # if the first element is PLACE and the count ==2 return true
     if len(data) == 2:  # start of header has more than what its needed
@@ -131,8 +145,17 @@ def validate_start_command(line):
 #                                   check_other_command
 #
 
-def check_other_command(line):
-    return True
+def get_direction(line):
+    direction = ""
+    if line == 1:
+        direction = "NORTH"
+    elif line == 2:
+        direction = "SOUTH"
+    elif line == 3:
+        direction = "EAST"
+    elif line == 4:
+        direction = "WEST"
+    return direction
 
 
 #############################################################################################
@@ -140,23 +163,78 @@ def check_other_command(line):
 #
 
 
-def validate_other_command(line):
-    # print(f"validate_other_command called {line}")
-    return True
+def validate_other_command(dline):
+    iv3 = 0
+    iv2 = 0
 
+    print(f"validate_other_command called {dline}")
+    # print(f"len(dline.strip()) = {len(dline.strip())}")
 
-#############################################################################################
-#                                   screen_clear
-#
+    if len(dline.strip()) == 0:  # check for NULL
+        # print(f"len(dline.strip()) = {len(dline.strip())}")
+        return False
 
+    line = dline  # assign and process
 
-def screen_clear():
-    # for mac and linux(here, os.name is 'posix')
-    if os.name == 'posix':
-        _ = os.system('clear')
+    data = line.split('\n')  # parse the header line
+    # print(len(data))
+    # print(data)
+    # print(f" data[0] = {data[0]}")
+
+    if data[0] == 'MOVE' or data[0] == 'LEFT' or data[0] == 'RIGHT' or data[0] == 'REPORT':
+        if data[0] == 'MOVE':
+            # print(f"[REPORT] {record}")
+            if record[2] == 1:  # NORTH - y axis+
+                record[1] = record[1] + 1
+            elif record[2] == 2:  # SOUTH - y axis-
+                record[1] = record[1] - 1
+            elif record[2] == 3:  # EAST - x axis+
+                record[0] = record[0] + 1
+            elif record[2] == 4:  # WEST - x axis-
+                record[0] = record[0] - 1
+        elif data[0] == 'LEFT':  # LEFT direction
+            if record[2] == 1:  # NORTH
+                record[2] = 4  # (WEST)
+            elif record[2] == 4:  # WEST
+                record[2] = 2  # (SOUTH)
+            elif record[2] == 2:  # SOUTH
+                record[2] = 3  # (EAST)
+            elif record[2] == 3:  # EAST
+                record[2] = 1  # (NORTH)
+        elif data[0] == 'RIGHT':  # RIGHT direction
+            if record[2] == 1:  # NORTH
+                record[2] = 3  # (EAST)
+            elif record[2] == 3:  # EAST
+                record[2] = 2  # (SOUTH)
+            elif record[2] == 2:  # SOUTH
+                record[2] = 4  # (WEST)
+            elif record[2] == 4:  # WEST
+                record[2] = 1  # (NORTH)
+        elif data[0] == 'REPORT':
+            print(f"Output: {record[0]},{record[1]},{get_direction(record[2])}")
+            # print(f"[REPORT] {record}")
+        else:
+            return False
+
+        # boundary limit
+        if record[0] > 5:
+            # print("oops... cant go any further")
+            record[0] = 5
+        if record[1] > 5:
+            # print("oops... cant go any further")
+            record[1] = 5
+        if record[0] < 0:
+            # print("mmm... cant go any further")
+            record[0] = 0
+        if record[1] < 0:
+            # print("mmm... cant go any further")
+            record[1] = 0
+
+        # print(f"[REPORT] {record}")
+        return True
     else:
-        # for windows platform
-        _ = os.system('cls')
+        # print(f"validate_other_command invalid command {dline}")
+        return False
 
 
 #############################################################################################
@@ -165,15 +243,26 @@ def screen_clear():
 
 
 def main():
-    ans = "999"
-    name = ""
+    name: str = ""
+    sec: int = 0
+    sel: int = 0
+    y: int = 0
+    avg_time = 0
+    min_time = 0
+    max_time = 0
+
     filenames = []
+    total_jobs = 0
+    ans: str = "999"
+    max_time_name: str = ""
+    min_time_name: str = ""
+    curr_file_name: str = ""
 
     # create folder - stats,logs
     # logs folder
     # stats folder
 
-    while ans:
+    while True:
         # now call function we defined above
         # screen_clear()
         print("     Menu List:")
@@ -188,12 +277,23 @@ def main():
         if ans == "1":
             print("\nList input files :")
             i = 1
+
+            filenames.clear()
             for x in os.listdir(os.getcwd()):
                 if x.endswith(".inp"):
-                    print(f"({i}) {x}")
-                    i = i + 1
+                    filenames.append(x)
+            filenames.sort()
+            # print(f"filename = {filenames}")
+            for x in filenames:
+                print(f"({i}) {x} ")
+                i = i + 1
+
         elif ans == "2":
-            print("\n Enter the file number to load:")
+            sel1 = input("\n Enter input file number to test :")
+            sec = int(sel1) - 1
+            sel = int(sec)
+            totFiles = 0
+            # print(f"-----------------> sel = {sel}")
             # throw the error if file not exist in the current folder/ or specified folder.
             # logs folder
             # stats folder
@@ -201,21 +301,21 @@ def main():
             # try:
             # load the file
             # read the first line and all the lines until you reach a valid start
+            totFiles = len(filenames)
+            if totFiles == 0 or sel >= totFiles:
+                print(f"no input / invalid selection : {sel} total:{totFiles}")
+                continue
+            # print(f"------selected file -----------> filenames[{sel}]={filenames[sel]}")
 
             ##############################################
             # read lines to get the first valid start line
             ##############################################
-            # step 2
-            # validate the remaining commands
-            # do the thing here
-            # validate_start_command
-            # except:
-            # open the file
-            # process the code
-            # print the result
-
             # step 1
-            keyfile = open("input4.inp")
+            curr_file_name = filenames[sel]
+            keyfile = open(filenames[sel])
+            # keyfile = open("test3.inp")
+            # keyfile = open("test3.inp")
+            # keyfile = open("input4.inp")
             # keyfile = open("no-header.inp")
             # keyfile = open("invalid-input.inp")
             header_recd = False
@@ -224,70 +324,96 @@ def main():
                     ret = validate_start_command(line)
                     if bool(ret):
                         header_recd = bool(ret)
-                        print(f" **** {line} ****  is a valid start packet ")
-                        print()
-                    else:
-                        print(f" xxxx {line} xxxx  is not a valid start packet ")
-                        print()
-                        # break
+                        # print(f" **** {line} ****  invalid first command")
+                        # print()
+                    # else:
+                    #     print()
+                    #     # print(f" xxxx {line} xxxx  is not a valid start packet ")
+                    #     # print()
                 else:
                     ret = validate_other_command(line)
                     if bool(ret):
-                        print(f" **** {line} ****  is a valid command")
-                        # print()
-                    else:
-                        print(f" xxxx {line} xxxx  is not a valid command packet ")
-                        # print()
-                        # print(f" [record]{record}")
-                        # print()
+                        # print(f" **** {line} ****  is a valid command")
+                        print()
+                    # else:
+                    #     # print(f" xxxx {line} xxxx  is not a valid command packet ")
+                    #     # print()
+                    #     # print(f" [record]{record}")
+                    #     print()
 
             if not header_recd:
                 print()
                 print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-                print(f"No valid header found")
+                print(f"No valid first command found")
                 print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
                 print()
-            else:
-                print()
-                print("---------------------------------------------------")
-                print(f" [record]{record}")
-                print("---------------------------------------------------")
-                print()
+            # else:
+            #     print()
+            #     print("---------------------------------------------------")
+            #     # print(f" [record]{record}")
+            #     # print("---------------------------------------------------")
+            #     # print()
 
+            print("---------------------------------------------------")
             end_time = datetime.now()
             time_diff = (end_time - start_time)
             execution_time = time_diff.total_seconds() * 1000
             # print(f"start time={start_time}, end time={end_time}, Total={round(execution_time, 4)} milliseconds")
             print(f"Total execution time={round(execution_time, 4)} milliseconds")
+
+            total_jobs = total_jobs + 1
+            if total_jobs == 1:
+                min_time: float = round(execution_time, 4)
+                min_time_name = curr_file_name
+                max_time: float = round(execution_time, 4)
+                max_time_name = curr_file_name
+            else:
+                if round(execution_time, 4) < min_time:
+                    min_time: float = round(execution_time, 4)
+                    min_time_name = curr_file_name
+
+                if round(execution_time, 4) > max_time:
+                    max_time: float = round(execution_time, 4)
+                    max_time_name = curr_file_name
+
+            avg_time = (avg_time + execution_time) / total_jobs
+
         elif ans == "3":
             name = input("\n Please enter the name of input file :  ")
+            fullname: str = name + ".inp"
+            f = open(fullname, "w")
+            f.write("# Add the commands, PLACE command is a valid first command")
+            f.close()
+
         elif ans == "4":
-            print("\n some cool Stats:")
-            print("\n Number of jobs run :")
-            print("\n average time of tot jobs:")
-            print("\n maximum time [ Single job]: job-num : time in secs")
-            print("\n minimum time [ Single job]:time in secs")
+            print(f"----------------")
+            print(f"some cool Stats:")
+            print(f"----------------")
+            print(f"  Number of jobs run :{total_jobs}")
+            print(f"  average time [ job exec time] : {round(avg_time, 4)}  milliseconds")
+            print(f"Job execution times:")
+            print(f"  maximum : {round(max_time, 4)}  milliseconds, input file name : {max_time_name}")
+            print(f"  minimum : {round(min_time, 4)}  milliseconds, input file name : {min_time_name}")
         elif ans == "5":
             print("\n Goodbye")
             exit(0)
-        elif ans != "":
-            print("\n Not Valid Choice Try again")
         elif ans == "":
-            print("\n Can't be empty - Goodbye ")
+            print("\n Can't be empty")
 
         print('                                                     ')
+        print('                                                     ')
+        print('*****************************************************')
+        print(' *                                                  *')
+        print('  *                                                *')
+        print(' *                                                  *')
         print('*____________________________________________________*')
         print('                                                     ')
-
-        # wait for 2 seconds to show menu
-        sleep(2)
-        # screen_clear()
+    # wait to show menu
+    sleep(1)
 
 
 #############################################################################################
 #                                   Begin
 #
-
-
 if __name__ == '__main__':
     main()
