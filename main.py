@@ -54,10 +54,12 @@ def check_start_command(line):
         v2 = int(data[1])
         v3 = str(data[2])
         v3 = v3.replace('\n', '', 1)
+        # print(f" check_start_command:: data[]= {data}")
 
         record_x: int = 0
         record_y: int = 0
         record_f: int = 0
+        # print(f" check_start_command :: true -1 rec:{record_x}{v1}- {record}")
 
         # get 'x'
         if 0 <= v1:
@@ -118,7 +120,7 @@ def validate_start_command(dline):
         if not data[0] == "PLACE":
             return False
         # else:
-        # print(f" data[0] = {data[0]}")
+        #     print(f" data[0] = {data[0]}")
 
     # if the first element is PLACE and the count ==2 return true
     if len(data) == 2:  # start of header has more than what its needed
@@ -166,8 +168,9 @@ def get_direction(line):
 def validate_other_command(dline):
     iv3 = 0
     iv2 = 0
+    ret: bool = False
 
-    print(f"validate_other_command called {dline}")
+    # print(f"validate_other_command called {dline}")
     # print(f"len(dline.strip()) = {len(dline.strip())}")
 
     if len(dline.strip()) == 0:  # check for NULL
@@ -215,27 +218,24 @@ def validate_other_command(dline):
             # print(f"[REPORT] {record}")
         else:
             return False
-
-        # boundary limit
-        if record[0] > 5:
-            # print("oops... cant go any further")
-            record[0] = 5
-        if record[1] > 5:
-            # print("oops... cant go any further")
-            record[1] = 5
-        if record[0] < 0:
-            # print("mmm... cant go any further")
-            record[0] = 0
-        if record[1] < 0:
-            # print("mmm... cant go any further")
-            record[1] = 0
-
-        # print(f"[REPORT] {record}")
-        return True
     else:
-        # print(f"validate_other_command invalid command {dline}")
-        return False
+        # print(f"PLACE command --------------------------------------------------------------> ")
+        # print(f"[REPORT] {record}")
+        ret = validate_start_command(line)
 
+    if record[0] > 5:
+        # print("oops... cant go any further")
+        record[0] = 5
+    if record[1] > 5:
+        # print("oops... cant go any further")
+        record[1] = 5
+    if record[0] < 0:
+        # print("mmm... cant go any further")
+        record[0] = 0
+    if record[1] < 0:
+        # print("mmm... cant go any further")
+        record[1] = 0
+    return ret
 
 #############################################################################################
 #                                   main
@@ -293,31 +293,30 @@ def main():
             sec = int(sel1) - 1
             sel = int(sec)
             totFiles = 0
-            # print(f"-----------------> sel = {sel}")
-            # throw the error if file not exist in the current folder/ or specified folder.
-            # logs folder
-            # stats folder
             start_time = datetime.now()
-            # try:
-            # load the file
             # read the first line and all the lines until you reach a valid start
             totFiles = len(filenames)
             if totFiles == 0 or sel >= totFiles:
                 print(f"no input / invalid selection : {sel} total:{totFiles}")
                 continue
-            # print(f"------selected file -----------> filenames[{sel}]={filenames[sel]}")
 
             ##############################################
             # read lines to get the first valid start line
             ##############################################
             # step 1
             curr_file_name = filenames[sel]
-            keyfile = open(filenames[sel])
-            # keyfile = open("test3.inp")
-            # keyfile = open("test3.inp")
-            # keyfile = open("input4.inp")
-            # keyfile = open("no-header.inp")
-            # keyfile = open("invalid-input.inp")
+            try:
+                keyfile = open(filenames[sel])
+            except OSError as err:
+                print("OS error: {0}".format(err))
+                if not keyfile.closed:
+                    keyfile.close()
+            except BaseException as err:
+                print(f"Unexpected {err=}, {type(err)=}")
+                if not keyfile.closed:
+                    keyfile.close()
+                raise
+
             header_recd = False
             for line in keyfile:
                 if not header_recd:
@@ -354,7 +353,11 @@ def main():
             #     # print("---------------------------------------------------")
             #     # print()
 
-            print("---------------------------------------------------")
+            # close the if not closed already
+            if not keyfile.closed:
+                keyfile.close()
+
+            # print("---------------------------------------------------")
             end_time = datetime.now()
             time_diff = (end_time - start_time)
             execution_time = time_diff.total_seconds() * 1000
@@ -381,10 +384,20 @@ def main():
         elif ans == "3":
             name = input("\n Please enter the name of input file :  ")
             fullname: str = name + ".inp"
-            f = open(fullname, "w")
+            try:
+                f = open(fullname, "w")
+            except OSError as err:
+                print("OS error: {0}".format(err))
+                if not f.closed:
+                    f.close()
+            except BaseException as err:
+                print(f"Unexpected {err=}, {type(err)=}")
+                if not f.closed:
+                    f.close()
+                raise
             f.write("# Add the commands, PLACE command is a valid first command")
-            f.close()
-
+            if not f.closed:
+                f.close()
         elif ans == "4":
             print(f"----------------")
             print(f"some cool Stats:")
@@ -395,14 +408,14 @@ def main():
             print(f"  maximum : {round(max_time, 4)}  milliseconds, input file name : {max_time_name}")
             print(f"  minimum : {round(min_time, 4)}  milliseconds, input file name : {min_time_name}")
         elif ans == "5":
-            print("\n Goodbye")
+            print("\n Tiny Robot going to rest for now")
             exit(0)
         elif ans == "":
             print("\n Can't be empty")
 
         print('                                                     ')
         print('                                                     ')
-        print('*****************************************************')
+        print('******************************************************')
         print(' *                                                  *')
         print('  *                                                *')
         print(' *                                                  *')
