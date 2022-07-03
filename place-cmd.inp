@@ -1,3 +1,10 @@
+# Add the commands, PLACE command is a valid first command
+PLACE 0,0,NORTH
+MOVE
+REPORT
+PLACE 0,0,NORTH
+MOVE
+REPORT
 # input file for the robot navigation system
 HELLO
 SET 1,2,NORTH
@@ -11,4 +18,3 @@ MOVE
 MOVE
 MOVE
 REPORT
-
